@@ -18,3 +18,9 @@
 ![image](https://user-images.githubusercontent.com/94684347/204106480-589756b9-a33a-40ed-b528-27a52df7b712.png)<br>
 
 
+
+Установка на одном инстансе двух серверов с разной группой доступности<br>
+![image](https://user-images.githubusercontent.com/94684347/204129864-3a4362e2-eabd-4b6e-bfe2-e2264e0f9f2a.png)
+
+
+
