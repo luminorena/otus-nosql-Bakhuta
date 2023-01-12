@@ -1,53 +1,37 @@
-1. Код для пайплайна на java. Результаты сильно зависят от параметра jedisPoolConfig.setMaxTotal(20) <br>
-Если количество подключений указать 1, то всё будет работать намного медленнее. 
+1. Pipeline <br>
 ```java
-package pipeline;
-
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
-import redis.clients.jedis.Pipeline;
-
-public class RedisPipeline {
-    public static void main(String[] args) {
-        JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
-        jedisPoolConfig.setMaxTotal(20);
-        jedisPoolConfig.setMaxIdle(10);
-        jedisPoolConfig.setMinIdle(5);
-
-        JedisPool jedisPool = new JedisPool(jedisPoolConfig,
-                "localhost", 6379, 2000, null);
-        try (Jedis jedis = jedisPool.getResource()) {
-            Pipeline pl = jedis.pipelined();
-            for (long i = 0; i < 100_000L; i++) {
-                pl.set("string" + i, "value" + i); // строки
-                //  pl.lpush("list" + i, "value" + i); // списки
-                // pl.sadd("set" + i, "value" + i);  // множества
-                // pl.hset("user#" + i, "name", "department"); // хеш
-              //  pl.zadd("key" + i,  i, String.valueOf(12*i)); // упорядоченные множества
-            }
-            pl.sync();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
-    }
-    
+ for (long i = 0; i < 100_000L; i++) {
+        pl.set("string", "value" + i); // строки
+        pl.lpush("list", "value" + i); // списки
+        pl.sadd("set:key", Long.toString(i));  // множества
+        pl.hset("user", "name", "department"); // хеш
+        pl.zadd("key",  i, String.valueOf(12*i)); // упорядоченные множества
+  }
+  pl.sync();
 ```
-2. Строки: setMaxTotal == 30, время выполнения 2 сек 662 мс (последняя итерация, показатели всегда разные, результаты +- одинаковые) <br>
-![image](https://user-images.githubusercontent.com/94684347/211653030-26ffc971-922b-473c-8dac-3b3fbd08d42e.png)
-3. Списки:  2 сек 464 мс  <br>
-![image](https://user-images.githubusercontent.com/94684347/211653629-715e7442-7bf9-49e6-b531-4143ff947d04.png)
-4. Множества: 2 сек 485 мс <br>
-![image](https://user-images.githubusercontent.com/94684347/211653994-a36a6a31-481f-4dc0-bb44-4ae4e12df5a9.png)
-5. Хеш-таблицы: 2 сек 477 мс <br>
-![image](https://user-images.githubusercontent.com/94684347/211654587-9bb1ca69-ab60-40ec-ac7a-f6682bd73a2e.png)
-6. Упорядоченное множество: 2 сек 335 мс <br>
-![image](https://user-images.githubusercontent.com/94684347/211654947-bffe1699-b05d-4fc6-9fcb-e304e71e7eb3.png)
-7. Выводы: <br>
-В целом, результаты в пределах 2.5 секунд. Но самые первые прогоны с чистым редисом заняли больше времени по сравнению с остальными итерациями <br>
-(предполагаю первоначальный прогрев кешей). Также первый прогон с вычисляемым значением занял больше времени (> 3c), но второй и последующие прогоны <br>
-показали почти одинаковые результаты в пределах 3х секунд (pl.zadd("key" + i,  i, String.valueOf(12*i))) 
+2. Вывод в Redis CLI <br>
+<set>
+smembers set:key
+<zset>
+zrange key 0 -1 withscores
+<string>
+get string
+<list>
+lrange list 0 -1
+<hash>
+hgetall user
+3. Пример <br>
+3.1 String - сложность О(1) линейная <br>
+![image](https://user-images.githubusercontent.com/94684347/212137874-cbc10f89-eb2c-4637-b600-f3603967ab52.png)
+3.2 List - Сложность O(log n)  - логарифмическая от количества элементов <br> Команда lrange list 0 -1 <br>
+![image](https://user-images.githubusercontent.com/94684347/212138177-84e7ccb5-489a-4a91-a4f8-642ffe1560ed.png)
+3.3 Множества - Сложность O(log n)  - логарифмическая от количества элементов <br> Команда smembers set:key <br>
+![image](https://user-images.githubusercontent.com/94684347/212139675-142acec6-f3f2-4c48-83d9-7fa36c6f7a7f.png)
+3.4 Hash - линейная сложность О(1) <br> Команда hgetall user
+![image](https://user-images.githubusercontent.com/94684347/212140239-21f91119-ce3f-4c5f-844a-29eb4553a736.png)
+3.5 ZSet - Сложность O(log n)  - логарифмическая от количества элементов <br> Команда zrange key 0 -1
+![image](https://user-images.githubusercontent.com/94684347/212141360-7eec81a8-abab-4717-963d-d180febd42a0.png)
+
+
 
 
