@@ -1,3 +1,6 @@
+Скачивание редактора
+![image](https://user-images.githubusercontent.com/94684347/230775731-4724fd38-e617-4677-9d73-39365f4c5b05.png)
+
 1.	Созданные и заполненные таблицы <br>
 ![image](https://user-images.githubusercontent.com/94684347/230775165-2476278b-1f1a-4d84-815b-97bf8b8d437c.png)
 2. Таблицы <br>
